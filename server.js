@@ -30,8 +30,8 @@ app.use(cors());
 
 app.use(cors({
   origin: [
-    "https://your-netlify-link.netlify.app",
-    "http://localhost:3001"
+    
+    "https://sparepartshubs.com"
   ],
   credentials: true,
 }));
