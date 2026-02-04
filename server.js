@@ -57,6 +57,8 @@ app.use('/api/about-us', require('./routes/aboutUsRoutes'));
 app.use('/api/faqs', faqRoutes);
 app.use("/api/footer", footerRoutes);
 app.use("/api/helpcenter", helpCenterRoutes);
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 
 
 
