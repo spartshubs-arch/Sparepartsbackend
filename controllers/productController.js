@@ -4,32 +4,29 @@ const { cloudinary } = require('../config/cloudinary');
 //ADD Product
 exports.addProduct = async (req, res) => {
   try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ error: 'No images uploaded' });
+    const { vendorId, imageUrls, ...rest } = req.body;
+
+    if (!vendorId) {
+      return res.status(400).json({ error: "vendorId is required" });
     }
 
-    console.log("📦 Images received:", req.files.length);
-    console.log("Vendor ID:", req.body.vendorId);
-
-    // CloudinaryStorage automatically adds the file.path as secure_url
-    const urls = req.files.map(file => file.path);
+    if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
+      return res.status(400).json({ error: "imageUrls array is required" });
+    }
 
     const newProduct = new Product({
-      ...req.body,
-      images: urls,
-      vendorId: req.body.vendorId
+      ...rest,
+      vendorId,
+      images: imageUrls, // ✅ Cloudinary URLs
     });
 
     await newProduct.save();
-
     res.status(201).json({ success: true, product: newProduct });
-
   } catch (err) {
     console.error("🔥 Server error:", err);
-    res.status(500).json({ error: 'Upload failed', details: err.message });
+    res.status(500).json({ error: "Upload failed", details: err.message });
   }
 };
-
 
 
 // View All Products
