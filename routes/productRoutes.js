@@ -9,7 +9,7 @@ const {
   deleteProduct, getAllProductsForAdmin
 } = require('../controllers/productController');
 
-router.post('/add', upload.array('images'), addProduct);
+router.post('/add', addProduct);
 router.get('/all', getAllVendorProducts);
 
 // GET /products/all-admin
