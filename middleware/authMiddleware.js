@@ -11,6 +11,7 @@ exports.authenticateJWT = (req, res, next) => {
 
     req.userId = decoded.id;
   req.vendorId = decoded.vendorId;  
+   req.adminId  = decoded.adminId;   
     next();
   });
 };
