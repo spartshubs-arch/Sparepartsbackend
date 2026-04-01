@@ -5,7 +5,6 @@ const Order = require('../models/Order');
 const User = require('../models/userModel');
 const Vendor = require('../models/Vendor');
 
-
  
 // exports.registerAdmin = async (req, res) => {
 //   try {
