@@ -18,6 +18,8 @@ const contactRoutes = require('./routes/contactRoutes');
 const faqRoutes = require('./routes/faqRoutes');
 const footerRoutes = require("./routes/footerRoutes");
 const helpCenterRoutes = require("./routes/helpCenterRoutes");
+const superAdminRoutes = require("./routes/superAdminRoutes");
+const notificationRoute = require("./routes/notificationRoutes");
 
 
 
@@ -30,8 +32,8 @@ app.use(cors());
 
 app.use(cors({
   origin: [
-    
-    "https://sparepartshubs.com"
+    "https://your-netlify-link.netlify.app",
+    "http://localhost:3002"
   ],
   credentials: true,
 }));
@@ -57,6 +59,9 @@ app.use('/api/about-us', require('./routes/aboutUsRoutes'));
 app.use('/api/faqs', faqRoutes);
 app.use("/api/footer", footerRoutes);
 app.use("/api/helpcenter", helpCenterRoutes);
+app.use("/api/superadmin", superAdminRoutes);
+app.use("/api/notifications", notificationRoute);
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
