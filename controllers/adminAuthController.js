@@ -7,6 +7,45 @@ const Vendor = require('../models/Vendor');
 
 
 
+// exports.registerAdmin = async (req, res) => {
+//   try {
+//     const { username, password, message } = req.body;
+
+//     if (!username || !password || !message) {
+//       return res.status(400).json({ message: "All fields are required." });
+//     }
+
+//     const adminCount = await Admin.countDocuments();
+//     if (adminCount >= 15) {
+//       return res.status(400).json({ message: "❌ Only 15 admins allowed." });
+//     }
+
+//     const existingAdmin = await Admin.findOne({ username });
+//     if (existingAdmin) {
+//       return res.status(400).json({ message: "❌ Username already exists." });
+//     }
+
+//     // ✅ Hash the password before saving
+//     const salt = await bcrypt.genSalt(10);
+//     const hashedPassword = await bcrypt.hash(password, salt);
+
+//     const newAdmin = new Admin({ 
+//       username, 
+//       password: hashedPassword, 
+//       registeredBy: message 
+//     });
+
+//     await newAdmin.save();
+
+//     res.status(201).json({ message: "✅ Admin registered successfully." });
+//   } catch (error) {
+//     console.error("Admin registration error:", error);
+//     res.status(500).json({ message: "❌ Server error." });
+//   }
+// };
+
+
+
 exports.registerAdmin = async (req, res) => {
   try {
     const { username, password, message } = req.body;
@@ -16,8 +55,8 @@ exports.registerAdmin = async (req, res) => {
     }
 
     const adminCount = await Admin.countDocuments();
-    if (adminCount >= 2) {
-      return res.status(400).json({ message: "❌ Only 2 admins allowed." });
+    if (adminCount >= 15) {
+      return res.status(400).json({ message: "❌ Only 15 admins allowed." });
     }
 
     const existingAdmin = await Admin.findOne({ username });
@@ -25,46 +64,80 @@ exports.registerAdmin = async (req, res) => {
       return res.status(400).json({ message: "❌ Username already exists." });
     }
 
-    // ✅ Hash the password before saving
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newAdmin = new Admin({ 
-      username, 
-      password: hashedPassword, 
-      registeredBy: message 
+    const newAdmin = new Admin({
+      username,
+      password: hashedPassword,
+      registeredBy: message,
+      isApproved: false,
     });
 
     await newAdmin.save();
 
-    res.status(201).json({ message: "✅ Admin registered successfully." });
+    res.status(201).json({
+      message: "✅ Admin registered successfully. Waiting for super admin approval.",
+    });
   } catch (error) {
     console.error("Admin registration error:", error);
     res.status(500).json({ message: "❌ Server error." });
   }
 };
+// exports.loginAdmin = async (req, res) => {
+//   const { username, password } = req.body;
+
+//   try {
+//     const admin = await Admin.findOne({ username });
+//     if (!admin) return res.status(401).json({ error: 'Invalid credentials' });
+
+//     const isMatch = await bcrypt.compare(password, admin.password);
+//     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
+
+//     const token = jwt.sign({ adminId: admin._id }, process.env.JWT_SECRET, {
+//       expiresIn: '1d',
+//     });
+
+//     res.json({ token, admin: { username: admin.username } });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: 'Server error' });
+//   }
+// };
+
 
 exports.loginAdmin = async (req, res) => {
   const { username, password } = req.body;
 
   try {
     const admin = await Admin.findOne({ username });
-    if (!admin) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!admin) return res.status(401).json({ error: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
+
+    if (!admin.isApproved) {
+      return res.status(403).json({
+        error: "Your account is pending approval from super admin.",
+      });
+    }
 
     const token = jwt.sign({ adminId: admin._id }, process.env.JWT_SECRET, {
-      expiresIn: '1d',
+      expiresIn: "1d",
     });
 
-    res.json({ token, admin: { username: admin.username } });
+    res.json({
+      token,
+      admin: {
+        username: admin.username,
+        isApproved: admin.isApproved,
+      },
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 };
-
 
 
 // for the admin stats 
@@ -156,3 +229,27 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ message: "❌ Failed to delete user" });
   }
 };
+
+// adminAuthController.js — ADD THIS AT THE BOTTOM
+
+exports.getMyPermissions = async (req, res) => {
+  try {
+    // req.adminId comes from your authenticateJWT middleware
+    const admin = await Admin.findById(req.adminId).select("accessType allowedPages");
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    res.json({
+      accessType:   admin.accessType   || "all",
+      allowedPages: admin.allowedPages || [],
+    });
+  } catch (error) {
+    console.error("Error fetching permissions:", error);
+    res.status(500).json({ message: "Failed to fetch permissions" });
+  }
+};
+
+
+
