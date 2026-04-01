@@ -12,7 +12,7 @@ router.get("/vendors", getAllVendors);
 router.delete("/vendor/:id", deleteVendor);
 router.put("/vendor/approve/:id", approveVendor);
 router.post("/register", registerAdmin);
-router.get("/users", getAllUsers);
+router.get("/users", getAllUsers); 
 router.delete("/user/:id", deleteUser);
 router.get("/my-permissions", authenticateJWT, getMyPermissions);
 
