@@ -87,12 +87,12 @@ exports.loginSuperAdmin = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    if (username !== "abdullah" || password !== "2399") {
+    if (username !== "Imdadullah Orakzai" || password !== "spareparts@#?<<!!!$&??3711") {
       return res.status(401).json({ message: "Invalid super admin credentials" });
     }
 
     const token = jwt.sign(
-      { role: "superadmin", username: "abdullah" },
+      { role: "superadmin", username: "Imdadullah Orakzai" },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
