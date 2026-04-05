@@ -1,3 +1,6 @@
+
+
+
 const mongoose = require("mongoose");
 const Notification = require("../models/Notification");
 const Vendor = require("../models/Vendor");
@@ -39,7 +42,6 @@ const getRecipientOwner = (req) => {
     return {
       recipientType: "admin",
       recipientId: req.adminId,
-      recipientModel: "Admin",
     };
   }
 
@@ -47,7 +49,6 @@ const getRecipientOwner = (req) => {
     return {
       recipientType: "vendor",
       recipientId: req.vendorId,
-      recipientModel: "Vendor",
     };
   }
 
@@ -55,16 +56,15 @@ const getRecipientOwner = (req) => {
     return {
       recipientType: "user",
       recipientId: req.userId,
-      recipientModel: "User",
     };
   }
 
   return null;
 };
 
-// ─────────────────────────────────────────────────────────────
-// Super Admin recipient lists
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
+// Recipient lists for super admin
+// ─────────────────────────────────────────
 
 exports.getVendorRecipients = async (req, res) => {
   try {
@@ -126,9 +126,9 @@ exports.getUserRecipients = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────
-// Super Admin send notifications
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
+// Send notifications
+// ─────────────────────────────────────────
 
 exports.sendSuperAdminNotifications = async (req, res) => {
   try {
@@ -197,26 +197,71 @@ exports.sendSuperAdminNotifications = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────
-// Super Admin get all notifications
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
+// Get all notifications for super admin
+// THIS IS THE IMPORTANT PART FOR SENT LIST
+// ─────────────────────────────────────────
 
 exports.getAllNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({})
-      .sort({ createdAt: -1 })
-      .lean();
+      .populate({
+        path: "recipientId",
+        select: "username firstName lastName email idNumber tradeName",
+      })
+      .sort({ createdAt: -1 });
 
-    res.json(notifications);
+    const formatted = notifications.map((n) => {
+      const recipient = n.recipientId || null;
+
+      let recipientName = "Unknown";
+      let recipientMeta = "";
+
+      if (n.recipientType === "admin" && recipient) {
+        recipientName = recipient.username || "Admin";
+        recipientMeta = recipient.username || "";
+      }
+
+      if (n.recipientType === "user" && recipient) {
+        recipientName =
+          [recipient.firstName, recipient.lastName].filter(Boolean).join(" ").trim() ||
+          recipient.email ||
+          "User";
+        recipientMeta = recipient.email || "";
+      }
+
+      if (n.recipientType === "vendor" && recipient) {
+        recipientName =
+          [recipient.firstName, recipient.lastName].filter(Boolean).join(" ").trim() ||
+          recipient.tradeName ||
+          "Vendor";
+        recipientMeta = recipient.idNumber ? `ID: ${recipient.idNumber}` : "";
+      }
+
+      return {
+        _id: n._id,
+        subject: n.subject,
+        message: n.message,
+        recipientType: n.recipientType,
+        recipientId: recipient?._id || n.recipientId,
+        recipientName,
+        recipientMeta,
+        createdAt: n.createdAt,
+        updatedAt: n.updatedAt,
+        isRead: n.isRead,
+      };
+    });
+
+    res.json(formatted);
   } catch (error) {
     console.error("Get all notifications error:", error);
     res.status(500).json({ message: "Failed to fetch notifications" });
   }
 };
 
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 // Admin notifications
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 
 exports.getAdminNotifications = async (req, res) => {
   try {
@@ -277,9 +322,9 @@ exports.markAllAdminNotificationsRead = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 // Vendor notifications
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 
 exports.getVendorNotifications = async (req, res) => {
   try {
@@ -340,9 +385,9 @@ exports.markAllVendorNotificationsRead = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 // User notifications
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
 
 exports.getUserNotifications = async (req, res) => {
   try {
@@ -403,9 +448,9 @@ exports.markAllUserNotificationsRead = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────
-// Shared single mark-as-read
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
+// Shared mark-as-read
+// ─────────────────────────────────────────
 
 exports.markAsRead = async (req, res) => {
   try {
@@ -436,9 +481,9 @@ exports.markAsRead = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────
-// Delete notification
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
+// Delete / Update
+// ─────────────────────────────────────────
 
 exports.deleteNotification = async (req, res) => {
   try {
@@ -454,13 +499,6 @@ exports.deleteNotification = async (req, res) => {
     res.status(500).json({ message: "Failed to delete notification" });
   }
 };
-
-// ─────────────────────────────────────────────────────────────
-// Update notification
-// NOTE: Updating a sent notification only updates one row/document.
-// Since selected/all sending creates many documents, avoid using update
-// for broadcast editing unless you build a campaign/groupId system.
-// ─────────────────────────────────────────────────────────────
 
 exports.updateNotification = async (req, res) => {
   try {
