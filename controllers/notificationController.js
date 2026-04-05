@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 const Notification = require("../models/Notification");
 const Vendor = require("../models/Vendor");
