@@ -48,7 +48,7 @@ router.get(
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
       // Redirect to frontend with pre-filled info
-      const redirectUrl = `http://localhost:3001/signup?token=${token}&firstName=${firstName}&lastName=${lastName}&email=${email}`;
+      const redirectUrl = `https://sparepartshubs.com/signup?token=${token}&firstName=${firstName}&lastName=${lastName}&email=${email}`;
       res.redirect(redirectUrl);
     } catch (err) {
       console.error(err);
@@ -80,7 +80,7 @@ router.get(
 
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-      const redirectUrl = `http://localhost:3001/signup?token=${token}&firstName=${firstName}&lastName=${lastName}&email=${email}`;
+      const redirectUrl = `https://sparepartshubs.com/signup?token=${token}&firstName=${firstName}&lastName=${lastName}&email=${email}`;
       res.redirect(redirectUrl);
     } catch (err) {
       console.error(err);
