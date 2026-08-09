@@ -34,6 +34,21 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Get One Blog by ID — needed by the new BlogDetailPage ("Read More" page)
+router.get("/:id", async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+    res.json(blog);
+  } catch (error) {
+    // Invalid ObjectId format also lands here — treat as not-found
+    // rather than a 500, since it's really a bad/old URL, not a server error.
+    res.status(404).json({ message: "Blog not found" });
+  }
+});
+
 // Delete Blog
 router.delete("/:id", async (req, res) => {
   try {
